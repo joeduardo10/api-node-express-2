@@ -1,5 +1,5 @@
 import NaoEncontrado from "../erros/NaoEncontrado.js";
-import livros from "../models/Livro.js";
+import { livros } from "../models/index.js";
 
 class LivroController {
 
@@ -75,18 +75,32 @@ class LivroController {
     }
   }
 
-  static listarLivroPorEditora = async (req, res, next) => {
+  static listarLivroPorFiltro = async (req, res, next) => {
     try {
-      const editora = req.query.editora;
+      const busca = processaBusca(req.query);
 
-      const livrosResultado = await livros.find({ "editora": editora });
-
+      const livrosResultado = await livros.find(busca);
+      
       res.status(200).send(livrosResultado);
     } catch (erro) {
-      next(erro)
+      next(erro);
     }
   }
-
+  
+}
+function processaBusca(parametros){
+  const { editora, titulo, minPaginas, maxPaginas } = parametros;
+  const busca = {};
+  
+  if(editora) busca.editora = {$regex: editora,$options: "i"};
+  if(titulo) busca.titulo = { $regex: titulo, $options: "i" };
+  if(minPaginas || maxPaginas)busca.numeroPaginas = {};
+  //gte = Greater Than or Equal = maior ou igual que
+  if(minPaginas)busca.numeroPaginas.$gte =  minPaginas;
+  //lte = Les Than or Equal = menor ou igual que
+  if(maxPaginas)busca.numeroPaginas.$lte = maxPaginas;
+  return busca;
 }
 
 export default LivroController
+// const regex = new RegExp(titulo, "i");
